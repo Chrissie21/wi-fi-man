@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ .title }}</title>
+  <link rel="stylesheet" href="/static/portal.css">
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+</head>
+<body>
+  <main class="shell">
+    <section class="header">
+      <h1>{{ .title }}</h1>
+      <p>Black/white captive portal for package purchase and token redemption.</p>
+      {{ if .detected_mac }}
+      <div class="pill">Detected device: {{ .detected_mac }}</div>
+      {{ else }}
+      <div class="pill warn">No MAC detected from gateway. Enter it manually.</div>
+      {{ end }}
+    </section>
+
+    <section class="grid">
+      <article class="panel packages">
+        <h2>Buy Packages</h2>
+        <p class="sub">New packages added by admin appear automatically here.</p>
+
+        <div class="purchase-meta">
+          <label>Device MAC
+            <input id="device_mac_global" class="mac-input" type="text" placeholder="AA:BB:CC:DD:EE:FF" value="{{ .detected_mac }}" required>
+          </label>
+          <label>Customer Ref (optional)
+            <input id="customer_ref_global" type="text" placeholder="Phone or name">
+          </label>
+        </div>
+
+        <div id="purchase-result"></div>
+
+        <div
+          id="package-cards"
+          class="cards"
+          hx-get="/portal/plans/fragment?device_mac={{ .detected_mac }}&gateway_id={{ .gateway_id }}"
+          hx-trigger="load, every 5s"
+          hx-swap="innerHTML"
+        >
+          <div class="empty">Loading packages...</div>
+        </div>
+      </article>
+
+      <article class="panel redeem">
+        <h2>Redeem Existing Token</h2>
+        <p class="sub">Already have a voucher? Redeem it here.</p>
+        <form hx-post="/portal/redeem" hx-target="#redeem-result" hx-swap="innerHTML">
+          <label for="token">Token</label>
+          <input id="token" type="text" name="token" placeholder="XXXX-XXXX-XXXX" required>
+
+          <label for="device_mac">Device MAC</label>
+          <input id="device_mac" class="mac-input" type="text" name="device_mac" placeholder="AA:BB:CC:DD:EE:FF" value="{{ .detected_mac }}" required>
+          <input type="hidden" name="link_login_only" value="{{ .link_login_only }}">
+          <input type="hidden" name="dst" value="{{ .dst }}">
+          <input type="hidden" name="popup" value="{{ .popup }}">
+
+          <button type="submit">Redeem Token</button>
+        </form>
+        <div id="redeem-result"></div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const fromQuery =
+        params.get('calling-station-id') ||
+        params.get('mac') ||
+        params.get('mac-address') ||
+        params.get('client_mac') ||
+        params.get('device_mac') ||
+        '';
+      const stored = localStorage.getItem('device_mac') || '';
+      const preferred = (fromQuery || stored).toUpperCase();
+
+      const globalMac = document.getElementById('device_mac_global');
+      const redeemMac = document.getElementById('device_mac');
+
+      if (preferred) {
+        [globalMac, redeemMac].forEach((input) => {
+          if (input && !input.value) input.value = preferred;
+        });
+        localStorage.setItem('device_mac', preferred);
+      }
+
+      function readMac() {
+        const value = (globalMac?.value || redeemMac?.value || '').toUpperCase().trim();
+        if (value) localStorage.setItem('device_mac', value);
+        return value;
+      }
+
+      document.addEventListener('change', (event) => {
+        const target = event.target;
+        if (target && target.classList && target.classList.contains('mac-input')) {
+          const mac = readMac();
+          if (redeemMac && target === globalMac) redeemMac.value = mac;
+          if (globalMac && target === redeemMac && !globalMac.value) globalMac.value = mac;
+        }
+      });
+
+      document.addEventListener('submit', (event) => {
+        const form = event.target;
+        if (!form.classList || !form.classList.contains('purchase-form')) return;
+        const mac = readMac();
+        const customerRef = document.getElementById('customer_ref_global')?.value || '';
+        const macInput = form.querySelector('input[name="device_mac"]');
+        const refInput = form.querySelector('input[name="customer_ref"]');
+        if (macInput) macInput.value = mac;
+        if (refInput) refInput.value = customerRef;
+
+        const link = params.get('link-login-only') || params.get('link_login_only') || '';
+        const dst = params.get('dst') || '';
+        const popup = params.get('popup') || '';
+        const linkInput = form.querySelector('input[name="link_login_only"]');
+        const dstInput = form.querySelector('input[name="dst"]');
+        const popupInput = form.querySelector('input[name="popup"]');
+        if (linkInput) linkInput.value = link;
+        if (dstInput) dstInput.value = dst;
+        if (popupInput) popupInput.value = popup;
+      }, true);
+    })();
+  </script>
+</body>
+</html>

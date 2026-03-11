@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS audit_logs;
+DROP TABLE IF EXISTS payments;
+DROP TABLE IF EXISTS usage_records;
+DROP TABLE IF EXISTS sessions;
+DROP TABLE IF EXISTS tokens;
+DROP TABLE IF EXISTS plans;
+DROP TYPE IF EXISTS payment_status;
+DROP TYPE IF EXISTS session_status;
+DROP TYPE IF EXISTS token_status;

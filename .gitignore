@@ -1,0 +1,14 @@
+# Go
+backend/bin/
+backend/.cache/
+backend/coverage.out
+
+# Node
+frontend-admin/node_modules/
+frontend-admin/dist/
+
+# OS
+.DS_Store
+
+# Env
+.env

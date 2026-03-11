@@ -1,0 +1,26 @@
+{{ range .plans }}
+<form class="card purchase-form" hx-post="/portal/purchase" hx-target="#purchase-result" hx-swap="innerHTML">
+  <h3>{{ .Name }}</h3>
+  <dl>
+    <dt>Duration</dt><dd>{{ .DurationMinutes }} mins</dd>
+    <dt>Data</dt><dd>{{ .DataLimitMB }} MB</dd>
+    <dt>Speed</dt><dd>{{ .SpeedDownKbps }} / {{ .SpeedUpKbps }} kbps</dd>
+    <dt>Devices</dt><dd>{{ .DeviceLimit }}</dd>
+    <dt>Price</dt><dd>${{ .Price }}</dd>
+  </dl>
+
+  <input type="hidden" name="plan_id" value="{{ .ID }}">
+  <input type="hidden" name="gateway_id" value="{{ $.gateway_id }}">
+  <input type="hidden" name="method" value="portal_checkout">
+  <input type="hidden" name="currency" value="USD">
+  <input type="hidden" name="device_mac" value="{{ $.detected_mac }}">
+  <input type="hidden" name="customer_ref" value="">
+  <input type="hidden" name="link_login_only" value="{{ $.link_login_only }}">
+  <input type="hidden" name="dst" value="{{ $.dst }}">
+  <input type="hidden" name="popup" value="{{ $.popup }}">
+
+  <button type="submit">Pay & Connect</button>
+</form>
+{{ else }}
+<div class="empty">No active plans available yet. Ask admin to add packages.</div>
+{{ end }}
