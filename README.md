@@ -368,6 +368,3 @@ curl -X POST http://localhost/v1/portal/redeem \
 └── docker-compose.yml           # local stack
 ```
 
-## License
-
-No license file is currently included. Add one before public/open distribution.
